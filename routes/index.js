@@ -9,42 +9,42 @@ var weresquirrel = db.get('weresquirrels');
 var unibear = db.get('unibears');
 var wereStat = db.get('wereStats');
 var Code = require('../lib/secretCode.js')
-
+var code = new Code()
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
 router.get('/colonies', function(req, res, next) {
-  colony.find({}).then(function (colonies) {
-    viewObj = {};
-    viewObj['colonies'] = [];
-    for (var i = 0; i < colonies.length; i++) {
-      colonies[i]['wins'] = 0;
-      viewObj.colonies.push(colonies[i])
-    }
-    console.log(viewObj);
-    return viewObj;
-  }).then(function (viewObj) {
-    duel.find({}).then(function (duels) {
-      var winners = [];
-      for (var i = 0; i < duels.length; i++) {
-        winners.push(duels[i].winner)
-      }
-      var count = {};
-      for (var i = 0; i < winners.length; i++) {
-        if (count[winners[i]] == undefined) {
-          count[winners[i]] = 1;
-        } else {
-          count[winners[i]]++
-        }
-      }
-      return count;
-      })
-  })
-  .then(function (count) {
-    res.render('colonies', {colonies: count})
+  code.getDuelWins()
+  .then(function (viewObj) {
+    res.render('colonies', {colonies: viewObj})
     })
+});
+
+router.get('/colonies/:id', function(req, res, next) {
+  colony.findOne(req.params.id).then(function (col) {
+    // colonies are here
+   return weresquirrelContract.find({colonyId: col._id})
+   .then(function (wereContracts) {
+    var out = wereContracts;
+    out['weresquirrels'] = [];
+    out['stats'] = [];
+    for (var i = 0; i < wereContracts.length; i++) {
+      // here is array of weresquirrel contracts
+      out.weresquirrels.push(weresquirrel.findOne({_id: wereContracts[i].weresquirrelId}));
+      out.stats.push(wereStat.findOne({weresquirrelId: wereContracts[i].weresquirrelId }))
+    }
+    Promise.all(out.stats).then(function (results) {
+      console.log(results);
+      return results
+      // here we have weresquirrels
+    })
+   })
+   .then(function (argument) {
+    // res.render('show', { colonyName: req.params.id });
+   })
+  })
 });
 
 module.exports = router;

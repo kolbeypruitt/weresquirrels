@@ -5,5 +5,5 @@ block content
   h1= colony
   for colony in colonies
     ul
-      li= colony[]
-      li= colony
+      li
+      a(href='/colonies/' + colony._id)= colony.name + ' wins:' + colony.wins
